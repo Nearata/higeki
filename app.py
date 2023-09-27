@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from ipaddress import IPv4Address, IPv4Network
-from typing import Union
+from typing import Any, Optional, Union
 
 from bs4 import BeautifulSoup
 from fastapi import Depends, FastAPI
@@ -29,7 +29,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="IP Checker API",
     description="Check if an IP is hiding something",
-    version="1.0.0",
     openapi_url=None,
     docs_url=None,
     redoc_url=None,
@@ -38,31 +37,66 @@ app = FastAPI(
 )
 
 
+class Item(BaseModel):
+    hiding: bool
+    # vpn: bool
+    # proxy: bool
+    # tor: bool
+    # relay: bool
+    # hosting: bool
+
+
 def same_subnet():
     return IPv4Address("1.1.1.1") in IPv4Network("1.1.1.0/24")
 
 
-async def check_ipinfo(item_id: IPvAnyAddress, request: Request):
+def get_summary(soup: BeautifulSoup, column: str) -> str:
+    if not (e := soup.find("span", string=column)):
+        return ""
+
+    if not (e1 := e.parent.find_next_sibling()):
+        return ""
+
+    return e1.get_text().strip().lower()
+
+
+def get_privacy_detection(soup: BeautifulSoup, column: str) -> Optional[bool]:
+    if not (e := soup.find("div", string=column)):
+        return None
+
+    if not (e1 := e.find_parent("div")):
+        return None
+
+    if not (e2 := e1.find("img")):
+        return None
+
+    return "right" in e2.get("src")
+
+
+async def check_ipinfo(item_id: IPvAnyAddress, request: Request) -> Optional[Item]:
     r = await request.app.state.client.get(f"https://ipinfo.io/{item_id}")
+
     soup = BeautifulSoup(r.text, "html5lib")
 
-    e = soup.find("span", string="Privacy")
-
-    if not e:
+    if not (is_privacy := get_summary(soup, "Privacy")):
         return None
 
-    e1 = e.find_parent("tr")
-
-    if not e1:
+    if not (is_anycast := get_summary(soup, "Anycast")):
         return None
 
-    print("true" in e1.get_text().lower())
+    return Item(hiding="true" in is_privacy or "true" in is_anycast)
 
 
-@app.get("/items/{item_id}")
-async def read_item(item_id: IPvAnyAddress, request: Request):
-    data = await check_ipinfo(item_id, request)
-    return {"hiding": True}
+@app.get("/check/{item_id}")
+async def read_item(item_id: IPvAnyAddress, request: Request) -> Any:
+    item = await check_ipinfo(item_id, request)
+
+    if not item:
+        return JSONResponse(
+            content={"message": "Service Unavailable."}, status_code=500
+        )
+
+    return item
 
 
 # dev only
