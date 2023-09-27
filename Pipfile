@@ -6,9 +6,9 @@ name = "pypi"
 [packages]
 fastapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
-httpx = "*"
 beautifulsoup4 = "*"
 html5lib = "*"
+httpx = {extras = ["http2"], version = "*"}
 
 [dev-packages]
 mypy = "*"
