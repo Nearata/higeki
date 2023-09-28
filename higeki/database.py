@@ -9,10 +9,8 @@ class Network(SQLModel, table=True):
     hiding: bool = Field(index=True)
 
 
-sqlite_url = f"sqlite:///database.db"
-
 connect_args = {"check_same_thread": False}
-engine = create_engine(sqlite_url, echo=True, connect_args=connect_args)
+engine = create_engine("sqlite:///database.db", echo=False, connect_args=connect_args)
 
 
 def create_db_and_tables():

@@ -1,17 +1,15 @@
 from contextlib import asynccontextmanager
 from ipaddress import IPv4Address, IPv4Network, ip_address, ip_network
-from typing import Any, List, Optional, Union
+from typing import Any, List, Optional
 
 from bs4 import BeautifulSoup
-from fastapi import Depends, FastAPI
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic import BaseModel
 from pydantic.networks import IPvAnyAddress
 from sqlmodel import Session, select
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from typing_extensions import Annotated
 from uvicorn import run
 
 from higeki.database import Network, create_db_and_tables, engine
