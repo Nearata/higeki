@@ -27,8 +27,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="IP Checker API",
-    description="Check if an IP is hiding something",
+    title="",
+    description="",
     openapi_url=None,
     docs_url=None,
     redoc_url=None,
@@ -84,7 +84,7 @@ async def check_ipinfo(item_id: IPvAnyAddress, request: Request) -> Optional[Ite
     if not (is_anycast := get_summary(soup, "Anycast")):
         return None
 
-    return Item(hiding="true" in is_privacy or "true" in is_anycast)
+    return Item(hiding="true" in [is_privacy, is_anycast])
 
 
 @app.get("/check/{item_id}")
