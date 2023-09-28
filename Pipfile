@@ -9,6 +9,7 @@ uvicorn = {extras = ["standard"], version = "*"}
 beautifulsoup4 = "*"
 html5lib = "*"
 httpx = {extras = ["http2"], version = "*"}
+sqlmodel = "*"
 
 [dev-packages]
 mypy = "*"
