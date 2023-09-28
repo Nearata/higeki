@@ -1,5 +1,6 @@
-from bs4 import BeautifulSoup
 from typing import Optional
+
+from bs4 import BeautifulSoup
 
 
 def get_privacy_detection(soup: BeautifulSoup, column: str) -> Optional[bool]:

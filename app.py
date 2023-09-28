@@ -14,6 +14,7 @@ from typing_extensions import Annotated
 from uvicorn import run
 
 from higeki.ipinfo import get_summary
+from higeki.models import Item
 
 
 @asynccontextmanager
@@ -39,15 +40,6 @@ app = FastAPI(
 )
 
 
-class Item(BaseModel):
-    hiding: bool
-    # vpn: bool
-    # proxy: bool
-    # tor: bool
-    # relay: bool
-    # hosting: bool
-
-
 def same_subnet():
     return IPv4Address("1.1.1.1") in IPv4Network("1.1.1.0/24")
 
@@ -57,13 +49,12 @@ async def check_ipinfo(item_id: IPvAnyAddress, request: Request) -> Optional[Ite
 
     soup = BeautifulSoup(r.text, "html5lib")
 
-    if not (is_privacy := get_summary(soup, "Privacy")):
+    lst = [get_summary(soup, "Privacy"), get_summary(soup, "Anycast")]
+
+    if None in lst:
         return None
 
-    if not (is_anycast := get_summary(soup, "Anycast")):
-        return None
-
-    return Item(hiding="true" in [is_privacy, is_anycast])
+    return Item(hiding="true" in lst)
 
 
 @app.get("/check/{item_id}")
