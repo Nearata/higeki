@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from pydantic.networks import IPvAnyAddress
 from sqlmodel import Session, select
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from uvicorn import run
 
 from higeki.database import Network, create_db_and_tables, engine
@@ -81,7 +81,9 @@ async def check_ipinfo(item_id: IPvAnyAddress, request: Request) -> Optional[Ite
 
 
 @app.get("/check/{address}")
-async def read_item(address: IPvAnyAddress, request: Request) -> Any:
+async def read_item(
+    address: IPvAnyAddress, request: Request, response: Response
+) -> Any:
     if known := is_known_network(address):
         return known
 
@@ -91,6 +93,8 @@ async def read_item(address: IPvAnyAddress, request: Request) -> Any:
         return JSONResponse(
             content={"message": "Service Unavailable."}, status_code=500
         )
+
+    response.status_code = 201
 
     return item
 

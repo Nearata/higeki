@@ -16,11 +16,11 @@ def get_privacy_detection(soup: BeautifulSoup, column: str) -> Optional[bool]:
     return "right" in e2.get("src")
 
 
-def get_summary(soup: BeautifulSoup, column: str) -> str:
+def get_summary(soup: BeautifulSoup, column: str) -> Optional[str]:
     if not (e := soup.find("span", string=column)):
-        return ""
+        return None
 
     if not (e1 := e.parent.find_next_sibling()):
-        return ""
+        return None
 
     return e1.get_text().strip().lower()
