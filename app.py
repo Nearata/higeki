@@ -11,9 +11,9 @@ from starlette.requests import Request
 from starlette.responses import Response
 from uvicorn import run
 
-from higeki.database import Network, create_db_and_tables, engine
-from higeki.ipinfo import get_summary
-from higeki.models import Item
+from src.database import Network, create_db_and_tables, engine
+from src.ipinfo import get_summary
+from src.models import Item
 
 
 @asynccontextmanager
