@@ -4,12 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-fastapi = "*"
 uvicorn = {extras = ["standard"], version = "*"}
 beautifulsoup4 = "*"
 html5lib = "*"
 httpx = {extras = ["http2"], version = "*"}
 sqlmodel = "*"
+fastapi = {version = "*", extras = ["standard"]}
 
 [dev-packages]
 mypy = "*"
@@ -17,4 +17,4 @@ isort = "*"
 black = "*"
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"

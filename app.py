@@ -1,11 +1,10 @@
 from contextlib import asynccontextmanager
-from ipaddress import IPv4Address, IPv4Network, ip_address, ip_network
+from ipaddress import ip_address, ip_network
 from typing import Any, List, Optional
 
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from httpx import AsyncClient
-from pydantic import BaseModel
 from pydantic.networks import IPvAnyAddress
 from sqlmodel import Session, select
 from starlette.requests import Request
