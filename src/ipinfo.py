@@ -24,3 +24,17 @@ def get_summary(soup: BeautifulSoup, column: str) -> Optional[str]:
         return None
 
     return e1.get_text().strip().lower()
+
+
+def get_geolocation(soup: BeautifulSoup) -> Optional[str]:
+    if not (e := soup.find("i", class_="flag")):
+        return None
+
+    lst: list[str]
+    if not (lst := e.get("class")):
+        return None
+
+    if not (flt := filter(lambda i: i.startswith("flag-"), lst)):
+        return None
+
+    return next(flt, "").replace("flag-", "")

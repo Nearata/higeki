@@ -1,19 +1,21 @@
 from contextlib import asynccontextmanager
 from ipaddress import ip_address, ip_network
-from typing import Any, List, Optional
+from typing import Optional
 
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic.networks import IPvAnyAddress
-from sqlmodel import Session, select
+from sqlmodel import select
 from starlette.requests import Request
 from starlette.responses import Response
+from starlette.exceptions import HTTPException
 from uvicorn import run
 
-from src.database import Network, create_db_and_tables, engine
-from src.ipinfo import get_summary
+from src.database import Network, create_db_and_tables
+from src.ipinfo import get_summary, get_geolocation
 from src.models import Item
+from src.dependencies import SessionDep
 
 
 @asynccontextmanager
@@ -21,9 +23,7 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     app.state.client = AsyncClient(
         http2=True,
-        headers={
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
-        },
+        headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"},
     )
     yield
     await app.state.client.aclose()
@@ -40,19 +40,18 @@ app = FastAPI(
 )
 
 
-def is_known_network(address: str) -> Optional[Item]:
-    with Session(engine) as session:
-        networks: List[Network] = session.exec(select(Network)).all()
+def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Item]:
+    networks = session.exec(select(Network)).all()
 
     if known := list(
         filter(lambda i: ip_address(address) in ip_network(i.address), networks)
     ):
-        return Item(hiding=known[0].hiding)
+        return Item(hiding=known[0].hiding, flag=known[0].flag)
 
     return None
 
 
-async def check_ipinfo(item_id: IPvAnyAddress, request: Request) -> Optional[Item]:
+async def check_ipinfo(item_id: IPvAnyAddress, request: Request, session: SessionDep) -> Optional[Item]:
     r = await request.app.state.client.get(f"https://ipinfo.io/{item_id}")
 
     soup = BeautifulSoup(r.text, "html5lib")
@@ -64,32 +63,35 @@ async def check_ipinfo(item_id: IPvAnyAddress, request: Request) -> Optional[Ite
 
     is_hiding = "true" in lst
 
-    network = get_summary(soup, "Range")
+    if not (network := get_summary(soup, "Range")):
+        return None
 
-    with Session(engine) as session:
-        networks: List[Network] = session.exec(select(Network)).all()
+    if not (geo := get_geolocation(soup)):
+        return None
 
-        if network not in list(map(lambda i: i.address, networks)):
-            new_network = Network(address=network, hiding=is_hiding)
+    networks = session.exec(select(Network)).all()
 
-            session.add(new_network)
-            session.commit()
-            # session.refresh(new_network)
+    if network not in list(map(lambda i: i.address, networks)):
+        new_network = Network(address=network, hiding=is_hiding, flag=geo)
+        session.add(new_network)
+        session.commit()
+        session.refresh(new_network)
 
-    return Item(hiding=is_hiding)
+    return Item(hiding=is_hiding, flag=geo)
 
 
 @app.get("/check/{address}")
 async def read_item(
-    address: IPvAnyAddress, request: Request, response: Response
-) -> Any:
-    if known := is_known_network(address):
+    address: IPvAnyAddress, session: SessionDep, request: Request, response: Response
+) -> Optional[Item]:
+    if known := is_known_network(address, session):
         return known
 
-    item = await check_ipinfo(address, request)
+    item = await check_ipinfo(address, request, session)
 
     if not item:
-        return Response(status_code=503)
+        raise HTTPException(503)
+        #return Response(status_code=503)
 
     response.status_code = 201
 

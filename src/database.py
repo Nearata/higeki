@@ -7,10 +7,10 @@ class Network(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     address: str = Field(index=True)
     hiding: bool = Field(index=True)
+    flag: str = Field(index=True)
 
 
-connect_args = {"check_same_thread": False}
-engine = create_engine("sqlite:///database.db", echo=False, connect_args=connect_args)
+engine = create_engine("sqlite:///database.db", echo=False, connect_args={"check_same_thread": False})
 
 
 def create_db_and_tables():
