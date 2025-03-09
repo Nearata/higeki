@@ -7,15 +7,15 @@ from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic.networks import IPvAnyAddress
 from sqlmodel import select
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
-from starlette.exceptions import HTTPException
 from uvicorn import run
 
 from src.database import Network, create_db_and_tables
-from src.ipinfo import get_summary, get_geolocation
-from src.models import Item
 from src.dependencies import SessionDep
+from src.ipinfo import get_geolocation, get_summary
+from src.models import Item
 
 
 @asynccontextmanager
@@ -23,7 +23,9 @@ async def lifespan(app: FastAPI):
     create_db_and_tables()
     app.state.client = AsyncClient(
         http2=True,
-        headers={"user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"},
+        headers={
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
+        },
     )
     yield
     await app.state.client.aclose()
@@ -51,7 +53,9 @@ def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[It
     return None
 
 
-async def check_ipinfo(item_id: IPvAnyAddress, request: Request, session: SessionDep) -> Optional[Item]:
+async def check_ipinfo(
+    item_id: IPvAnyAddress, request: Request, session: SessionDep
+) -> Optional[Item]:
     r = await request.app.state.client.get(f"https://ipinfo.io/{item_id}")
 
     soup = BeautifulSoup(r.text, "html5lib")
@@ -91,7 +95,7 @@ async def read_item(
 
     if not item:
         raise HTTPException(503)
-        #return Response(status_code=503)
+        # return Response(status_code=503)
 
     response.status_code = 201
 
