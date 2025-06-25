@@ -11,7 +11,7 @@ class Network(SQLModel, table=True):
 
 
 engine = create_engine(
-    "sqlite:///database.db", echo=False, connect_args={"check_same_thread": False}
+    "sqlite:///data/sqlite.db", echo=False, connect_args={"check_same_thread": False}
 )
 
 

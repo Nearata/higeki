@@ -95,7 +95,6 @@ async def read_item(
 
     if not item:
         raise HTTPException(503)
-        # return Response(status_code=503)
 
     response.status_code = 201
 
