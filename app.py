@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 from ipaddress import ip_address, ip_network
 from typing import Optional
+from pathlib import Path
 
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
@@ -14,17 +15,18 @@ from uvicorn import run
 
 from src.database import Network, create_db_and_tables
 from src.dependencies import SessionDep
-from src.ipinfo import get_geolocation, get_summary
+from src.ipinfo import get_geolocation, get_summary, get_range_from_breadcrumb
 from src.models import Item
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    Path("data").mkdir(exist_ok=True)
     create_db_and_tables()
     app.state.client = AsyncClient(
         http2=True,
         headers={
-            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0"
         },
     )
     yield
@@ -67,11 +69,10 @@ async def check_ipinfo(
 
     is_hiding = "true" in lst
 
-    if not (network := get_summary(soup, "Range")):
+    if not (network := (get_summary(soup, "Range") or get_range_from_breadcrumb(soup))):
         return None
 
-    if not (geo := get_geolocation(soup)):
-        return None
+    geo = get_geolocation(soup)
 
     networks = session.exec(select(Network)).all()
 
@@ -103,4 +104,4 @@ async def read_item(
 
 # dev only
 if __name__ == "__main__":
-    run("app:app", host="127.0.0.1", port=1234, reload=True)
+    run("app:app", host="127.0.0.1", port=8000, reload=True)

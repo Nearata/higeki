@@ -7,7 +7,7 @@ class Network(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     address: str = Field(index=True)
     hiding: bool = Field(index=True)
-    flag: str = Field(index=True)
+    flag: Optional[str] = Field(index=True)
 
 
 engine = create_engine(

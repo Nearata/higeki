@@ -26,6 +26,16 @@ def get_summary(soup: BeautifulSoup, column: str) -> Optional[str]:
     return e1.get_text().strip().lower()
 
 
+def get_range_from_breadcrumb(soup: BeautifulSoup) -> Optional[str]:
+    if not (ol := soup.find("ol", {"class": "breadcrumbs"})):
+        return None
+
+    if not (links := ol.find_all("a")):
+        return None
+
+    return links[-1].get_text().strip()
+
+
 def get_geolocation(soup: BeautifulSoup) -> Optional[str]:
     if not (e := soup.find("i", class_="flag")):
         return None
