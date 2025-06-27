@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from ipaddress import ip_address, ip_network
+from ipaddress import ip_network
 from typing import Optional
 from pathlib import Path
 
@@ -44,21 +44,22 @@ app = FastAPI(
 )
 
 
-def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Item]:
-    networks = session.exec(select(Network)).all()
+def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Network]:
+    address1 = int(address)
 
-    if known := list(
-        filter(lambda i: ip_address(address) in ip_network(i.address), networks)
-    ):
-        return Item(hiding=known[0].hiding, flag=known[0].flag)
+    try:
+        statement = select(Network).where(Network.network <= address1, Network.broadcast >= address1)
+        result = session.exec(statement).first()
+    except Exception as e:
+        return None
 
-    return None
+    return result
 
 
 async def check_ipinfo(
-    item_id: IPvAnyAddress, request: Request, session: SessionDep
-) -> Optional[Item]:
-    r = await request.app.state.client.get(f"https://ipinfo.io/{item_id}")
+    address: IPvAnyAddress, request: Request, session: SessionDep
+) -> Optional[Network]:
+    r = await request.app.state.client.get(f"https://ipinfo.io/{address}")
 
     soup = BeautifulSoup(r.text, "html5lib")
 
@@ -69,26 +70,36 @@ async def check_ipinfo(
 
     is_hiding = "true" in lst
 
-    if not (network := (get_summary(soup, "Range") or get_range_from_breadcrumb(soup))):
+    if not (range := (get_summary(soup, "Range") or get_range_from_breadcrumb(soup))):
         return None
 
-    geo = get_geolocation(soup)
+    cidr = ip_network(range, False)
+    network = int(cidr.network_address)
+    broadcast = int(cidr.broadcast_address)
 
-    networks = session.exec(select(Network)).all()
+    statement = select(Network).where(Network.cidr == range)
+    result = session.exec(statement).first()
 
-    if network not in list(map(lambda i: i.address, networks)):
-        new_network = Network(address=network, hiding=is_hiding, flag=geo)
+    if not result:
+        geo = get_geolocation(soup)
+        new_network = Network(
+            cidr=range,
+            network=network,
+            broadcast=broadcast,
+            hiding=is_hiding,
+            flag=geo)
         session.add(new_network)
         session.commit()
         session.refresh(new_network)
+        return new_network
 
-    return Item(hiding=is_hiding, flag=geo)
+    return result
 
 
-@app.get("/check/{address}")
+@app.get("/check/{address}", response_model=Item)
 async def read_item(
     address: IPvAnyAddress, session: SessionDep, request: Request, response: Response
-) -> Optional[Item]:
+) -> Optional[Network]:
     if known := is_known_network(address, session):
         return known
 
@@ -96,8 +107,6 @@ async def read_item(
 
     if not item:
         raise HTTPException(503)
-
-    response.status_code = 201
 
     return item
 
