@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from ipaddress import ip_network
-from typing import Optional
 from pathlib import Path
+from typing import Optional
 
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
@@ -15,7 +15,7 @@ from uvicorn import run
 
 from src.database import Network, create_db_and_tables
 from src.dependencies import SessionDep
-from src.ipinfo import get_geolocation, get_summary, get_range_from_breadcrumb
+from src.ipinfo import get_geolocation, get_range_from_breadcrumb, get_summary
 from src.models import Item
 
 
@@ -46,7 +46,9 @@ app = FastAPI(
 
 def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Network]:
     address1 = int(address)
-    statement = select(Network).where(Network.network <= address1, Network.broadcast >= address1)
+    statement = select(Network).where(
+        Network.network <= address1, Network.broadcast >= address1
+    )
     return session.exec(statement).first()
 
 
@@ -76,11 +78,8 @@ async def check_ipinfo(
     if not (result := session.exec(statement).first()):
         geo = get_geolocation(soup)
         new_network = Network(
-            cidr=range,
-            network=network,
-            broadcast=broadcast,
-            hiding=is_hiding,
-            flag=geo)
+            cidr=range, network=network, broadcast=broadcast, hiding=is_hiding, flag=geo
+        )
         session.add(new_network)
         session.commit()
         session.refresh(new_network)
