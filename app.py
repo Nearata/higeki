@@ -46,14 +46,8 @@ app = FastAPI(
 
 def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Network]:
     address1 = int(address)
-
-    try:
-        statement = select(Network).where(Network.network <= address1, Network.broadcast >= address1)
-        result = session.exec(statement).first()
-    except Exception as e:
-        return None
-
-    return result
+    statement = select(Network).where(Network.network <= address1, Network.broadcast >= address1)
+    return session.exec(statement).first()
 
 
 async def check_ipinfo(
@@ -78,9 +72,8 @@ async def check_ipinfo(
     broadcast = int(cidr.broadcast_address)
 
     statement = select(Network).where(Network.cidr == range)
-    result = session.exec(statement).first()
 
-    if not result:
+    if not (result := session.exec(statement).first()):
         geo = get_geolocation(soup)
         new_network = Network(
             cidr=range,
