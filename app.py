@@ -13,7 +13,7 @@ from starlette.responses import Response
 
 from src.database import Network, create_db_and_tables
 from src.dependencies import SessionDep
-from src.ipinfo import get_geolocation, get_range, get_summary
+from src.ipinfo import get_range, get_summary
 from src.models import Item
 
 
@@ -52,8 +52,10 @@ def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Ne
 async def check_ipinfo(
     address: IPvAnyAddress, request: Request, session: SessionDep
 ) -> Optional[Network]:
+    if known := is_known_network(address, session):
+        return known
+    
     r = await request.app.state.client.get(f"https://ipinfo.io/{address}")
-
     soup = BeautifulSoup(r.text, "html5lib")
 
     lst = [get_summary(soup, "Privacy"), get_summary(soup, "Anycast")]
@@ -69,28 +71,20 @@ async def check_ipinfo(
     cidr = ip_network(range, False)
     network = int(cidr.network_address)
     broadcast = int(cidr.broadcast_address)
-    statement = select(Network).where(Network.cidr == range)
 
-    if not (result := session.exec(statement).first()):
-        geo = get_geolocation(soup)
-        new_network = Network(
-            cidr=range, network=network, broadcast=broadcast, hiding=is_hiding, flag=geo
-        )
-        session.add(new_network)
-        session.commit()
-        session.refresh(new_network)
-        return new_network
-
-    return result
+    new_network = Network(
+        cidr=range, network=network, broadcast=broadcast, hiding=is_hiding
+    )
+    session.add(new_network)
+    session.commit()
+    session.refresh(new_network)
+    return new_network
 
 
 @app.get("/check/{address}", response_model=Item)
 async def read_item(
     address: IPvAnyAddress, session: SessionDep, request: Request, _: Response
 ) -> Optional[Network]:
-    if known := is_known_network(address, session):
-        return known
-
     if not (item := await check_ipinfo(address, request, session)):
         raise HTTPException(503)
 

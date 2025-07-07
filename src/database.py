@@ -8,10 +8,9 @@ from sqlmodel import Field, SQLModel, create_engine
 class Network(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     cidr: str = Field(index=True)
-    network: int = Field()
-    broadcast: int = Field()
-    hiding: bool = Field()
-    flag: Optional[str] = Field()
+    network: int
+    broadcast: int
+    hiding: bool
 
 
 with Path(environ.get("POSTGRES_PASSWORD_FILE", "")) as f:
