@@ -1,8 +1,8 @@
-certs/*
-!certs/.gitkeep
 .vscode/
 database.db
 data/*
+postgres_password.txt
+*.pem
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,4 +1,6 @@
 from typing import Optional
+from os import environ
+from pathlib import Path
 
 from sqlmodel import Field, SQLModel, create_engine
 
@@ -12,10 +14,10 @@ class Network(SQLModel, table=True):
     flag: Optional[str] = Field()
 
 
-engine = create_engine(
-    "sqlite:///data/sqlite.db", echo=False, connect_args={"check_same_thread": False}
-)
+with Path(environ.get("POSTGRES_PASSWORD_FILE", "")) as f:
+    PSW = f.read_text().strip()
 
+engine = create_engine(f"postgresql+psycopg://postgres:{PSW}@db/postgres")
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

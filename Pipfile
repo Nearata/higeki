@@ -4,12 +4,12 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-uvicorn = {extras = ["standard"], version = "*"}
 beautifulsoup4 = "*"
 html5lib = "*"
 httpx = {extras = ["http2"], version = "*"}
 sqlmodel = "*"
 fastapi = {version = "*", extras = ["standard"]}
+psycopg = {version = "*", extras = ["binary"]}
 
 [dev-packages]
 mypy = "*"

@@ -42,8 +42,8 @@ RUN --mount=type=cache,target=/root/.cache/pipenv \
     --mount=type=bind,source=Pipfile.lock,target=Pipfile.lock
 
 # Create directory and change owner
-RUN mkdir -p /app/data
-RUN chown appuser /app/data
+#RUN mkdir -p /app/data
+#RUN chown appuser /app/data
 
 # Copy dependency files
 COPY Pipfile Pipfile.lock ./

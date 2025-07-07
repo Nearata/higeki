@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 from ipaddress import ip_network
-from pathlib import Path
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -11,17 +10,15 @@ from sqlmodel import select
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
-from uvicorn import run
 
 from src.database import Network, create_db_and_tables
 from src.dependencies import SessionDep
-from src.ipinfo import get_geolocation, get_range_from_breadcrumb, get_summary
+from src.ipinfo import get_geolocation, get_range, get_summary
 from src.models import Item
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Path("data").mkdir(exist_ok=True)
     create_db_and_tables()
     app.state.client = AsyncClient(
         http2=True,
@@ -66,13 +63,12 @@ async def check_ipinfo(
 
     is_hiding = "true" in lst
 
-    if not (range := (get_summary(soup, "Range") or get_range_from_breadcrumb(soup))):
+    if not (range := get_range(soup)):
         return None
 
     cidr = ip_network(range, False)
     network = int(cidr.network_address)
     broadcast = int(cidr.broadcast_address)
-
     statement = select(Network).where(Network.cidr == range)
 
     if not (result := session.exec(statement).first()):
@@ -90,19 +86,12 @@ async def check_ipinfo(
 
 @app.get("/check/{address}", response_model=Item)
 async def read_item(
-    address: IPvAnyAddress, session: SessionDep, request: Request, response: Response
+    address: IPvAnyAddress, session: SessionDep, request: Request, _: Response
 ) -> Optional[Network]:
     if known := is_known_network(address, session):
         return known
 
-    item = await check_ipinfo(address, request, session)
-
-    if not item:
+    if not (item := await check_ipinfo(address, request, session)):
         raise HTTPException(503)
 
     return item
-
-
-# dev only
-if __name__ == "__main__":
-    run("app:app", host="127.0.0.1", port=8000, reload=True)
