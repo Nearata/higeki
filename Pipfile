@@ -14,8 +14,7 @@ alembic = "*"
 
 [dev-packages]
 mypy = "*"
-isort = "*"
-black = "*"
+ruff = "*"
 
 [requires]
 python_version = "3.9"

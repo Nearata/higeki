@@ -1,10 +1,10 @@
-from typing import Optional
 from os import environ
 from pathlib import Path
+from typing import Optional
 
-from sqlmodel import Field, SQLModel, create_engine
-from sqlalchemy.dialects.postgresql import CIDR
 from sqlalchemy import Column
+from sqlalchemy.dialects.postgresql import CIDR
+from sqlmodel import Field, SQLModel, create_engine
 
 
 class Network(SQLModel, table=True):
@@ -18,5 +18,6 @@ def url() -> str:
         PSW = f.read_text().strip()
 
     return f"postgresql+psycopg://postgres:{PSW}@db/postgres"
+
 
 engine = create_engine(url())

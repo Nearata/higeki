@@ -5,12 +5,12 @@ from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from httpx import AsyncClient
 from pydantic.networks import IPvAnyAddress
+from sqlalchemy import literal
+from sqlalchemy.dialects.postgresql import INET
 from sqlmodel import select
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
-from sqlalchemy import literal
-from sqlalchemy.dialects.postgresql import INET
 
 from src.database import Network
 from src.dependencies import SessionDep
@@ -42,7 +42,9 @@ app = FastAPI(
 
 
 def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Network]:
-    statement = select(Network).where(literal(address).cast(INET).op("<<")(Network.cidr))
+    statement = select(Network).where(
+        literal(address).cast(INET).op("<<")(Network.cidr)
+    )
     return session.exec(statement).first()
 
 
@@ -65,9 +67,7 @@ async def check_ipinfo(
     if not (range := get_range(soup)):
         return None
 
-    new_network = Network(
-        cidr=range, hiding=is_hiding
-    )
+    new_network = Network(cidr=range, hiding=is_hiding)
     session.add(new_network)
     session.commit()
     session.refresh(new_network)
