@@ -3,20 +3,20 @@ from os import environ
 from pathlib import Path
 
 from sqlmodel import Field, SQLModel, create_engine
+from sqlalchemy.dialects.postgresql import CIDR
+from sqlalchemy import Column
 
 
 class Network(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    cidr: str = Field(index=True)
-    network: int
-    broadcast: int
+    cidr: str = Field(sa_column=Column(CIDR, index=True))
     hiding: bool
 
 
-with Path(environ.get("POSTGRES_PASSWORD_FILE", "")) as f:
-    PSW = f.read_text().strip()
+def url() -> str:
+    with Path(environ.get("POSTGRES_PASSWORD_FILE", "")) as f:
+        PSW = f.read_text().strip()
 
-engine = create_engine(f"postgresql+psycopg://postgres:{PSW}@db/postgres")
+    return f"postgresql+psycopg://postgres:{PSW}@db/postgres"
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
+engine = create_engine(url())

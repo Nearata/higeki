@@ -1,5 +1,4 @@
 from contextlib import asynccontextmanager
-from ipaddress import ip_network
 from typing import Optional
 
 from bs4 import BeautifulSoup
@@ -10,8 +9,10 @@ from sqlmodel import select
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
+from sqlalchemy import literal
+from sqlalchemy.dialects.postgresql import INET
 
-from src.database import Network, create_db_and_tables
+from src.database import Network
 from src.dependencies import SessionDep
 from src.ipinfo import get_range, get_summary
 from src.models import Item
@@ -19,7 +20,6 @@ from src.models import Item
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    create_db_and_tables()
     app.state.client = AsyncClient(
         http2=True,
         headers={
@@ -42,10 +42,7 @@ app = FastAPI(
 
 
 def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Network]:
-    address1 = int(address)
-    statement = select(Network).where(
-        Network.network <= address1, Network.broadcast >= address1
-    )
+    statement = select(Network).where(literal(address).cast(INET).op("<<")(Network.cidr))
     return session.exec(statement).first()
 
 
@@ -54,7 +51,7 @@ async def check_ipinfo(
 ) -> Optional[Network]:
     if known := is_known_network(address, session):
         return known
-    
+
     r = await request.app.state.client.get(f"https://ipinfo.io/{address}")
     soup = BeautifulSoup(r.text, "html5lib")
 
@@ -68,12 +65,8 @@ async def check_ipinfo(
     if not (range := get_range(soup)):
         return None
 
-    cidr = ip_network(range, False)
-    network = int(cidr.network_address)
-    broadcast = int(cidr.broadcast_address)
-
     new_network = Network(
-        cidr=range, network=network, broadcast=broadcast, hiding=is_hiding
+        cidr=range, hiding=is_hiding
     )
     session.add(new_network)
     session.commit()

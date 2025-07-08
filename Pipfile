@@ -8,8 +8,9 @@ beautifulsoup4 = "*"
 html5lib = "*"
 httpx = {extras = ["http2"], version = "*"}
 sqlmodel = "*"
-fastapi = {version = "*", extras = ["standard"]}
+fastapi = {version = "*", extras = ["standard-no-fastapi-cloud-cli"]}
 psycopg = {version = "*", extras = ["binary"]}
+alembic = "*"
 
 [dev-packages]
 mypy = "*"

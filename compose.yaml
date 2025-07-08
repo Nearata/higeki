@@ -11,7 +11,7 @@ services:
   api:
     build:
       context: .
-    command: python -m fastapi run app.py --port 80 --proxy-headers
+    command: sh -c "python -m alembic upgrade head && python -m fastapi run app.py --port 80 --proxy-headers"
     networks:
       - proxy
     labels:
@@ -25,7 +25,8 @@ services:
       - traefik.http.middlewares.testheader.headers.customresponseheaders.Cache-Control=no-store
       - traefik.http.routers.api.middlewares=testheader@docker
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
     develop:
@@ -35,6 +36,7 @@ services:
           target: ./app
     secrets:
       - postgres_password
+    restart: on-failure
   traefik:
     image: traefik:v3.4
     command:
@@ -61,6 +63,7 @@ services:
       - proxy
     depends_on:
       - api
+    restart: unless-stopped
   db:
     image: postgres
     restart: always
@@ -76,6 +79,11 @@ services:
       - 5432:5432
     secrets:
       - postgres_password
+    healthcheck:
+      test: [ "CMD", "pg_isready" ]
+      interval: 2s
+      timeout: 3s
+      retries: 10
 
 volumes:
   database:
