@@ -80,7 +80,7 @@ services:
     secrets:
       - postgres_password
     healthcheck:
-      test: [ "CMD", "pg_isready" ]
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
       interval: 2s
       timeout: 3s
       retries: 10

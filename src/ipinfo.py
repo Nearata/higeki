@@ -1,6 +1,52 @@
-from typing import Optional
+from typing import Optional, Union
 
 from bs4 import BeautifulSoup
+from fastapi import Request
+from pydantic import IPvAnyAddress
+
+from .dependencies import SessionDep
+from .models import Network, Summary
+
+
+async def check_ipinfo(
+    address: IPvAnyAddress, request: Request, session: SessionDep
+) -> Optional[Network]:
+    r = await request.app.state.client.get(f"https://ipinfo.io/{address}")
+    soup = BeautifulSoup(r.text, "html5lib")
+
+    asn = get_summary(soup, "ASN")
+    hostname = get_summary(soup, "Hostname")
+    range = get_summary(soup, "Range")
+    company = get_summary(soup, "Company")
+    hosted_domains: Union[str, int, None] = get_summary(soup, "Hosted domains")
+    privacy = get_summary(soup, "Privacy")
+    anycast = get_summary(soup, "Anycast")
+    asn_type = get_summary(soup, "ASN type")
+    abuse_contact = get_summary(soup, "Abuse contact")
+
+    hosted_domains = int(hosted_domains) if hosted_domains else 0
+
+    if not (range and privacy and anycast):
+        return None
+
+    is_hiding = "true" in (privacy, anycast)
+
+    new_summary = Summary(
+        asn=asn,
+        hostname=hostname,
+        cidr=range,
+        company=company,
+        hosted_domains=hosted_domains,
+        privacy="true" in privacy,
+        anycast="true" in anycast,
+        asn_type=asn_type,
+        abuse_contact=abuse_contact)
+    new_network = Network(hiding=is_hiding, summary=new_summary)
+    session.add(new_network)
+    session.commit()
+    session.refresh(new_network)
+
+    return new_network
 
 
 def get_summary(soup: BeautifulSoup, column: str) -> Optional[str]:

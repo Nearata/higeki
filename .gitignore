@@ -3,6 +3,7 @@ database.db
 data/*
 postgres_password.txt
 *.pem
+.ruff_cache
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
