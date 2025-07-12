@@ -5,6 +5,7 @@ Revises: 11e273d52a23
 Create Date: 2025-07-10 15:31:58.221278
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa
@@ -13,8 +14,8 @@ from sqlalchemy.dialects.postgresql import CIDR
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '8f1d08fe3ca4'
-down_revision: Union[str, Sequence[str], None] = '11e273d52a23'
+revision: str = "8f1d08fe3ca4"
+down_revision: Union[str, Sequence[str], None] = "11e273d52a23"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

@@ -40,8 +40,10 @@ app = FastAPI(
 
 
 def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Network]:
-    statement = select(Network).join(Summary).where(
-        literal(address).cast(INET).op("<<")(Summary.cidr)
+    statement = (
+        select(Network)
+        .join(Summary)
+        .where(literal(address).cast(INET).op("<<")(Summary.cidr))
     )
     return session.exec(statement).first()
 

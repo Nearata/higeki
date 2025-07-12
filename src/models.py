@@ -19,13 +19,21 @@ class Network(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hiding: bool
     created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(default_factory=datetime.now, sa_column_kwargs={"onupdate": func.now()})
+    updated_at: datetime = Field(
+        default_factory=datetime.now, sa_column_kwargs={"onupdate": func.now()}
+    )
     summary: "Summary" = Relationship()
     ipgeolocation: "IpGeolocation" = Relationship()
 
 
 class Summary(SQLModel, table=True):
-    network_id: Optional[int] = Field(default=None, primary_key=True, foreign_key="network.id", ondelete="CASCADE", exclude=True)
+    network_id: Optional[int] = Field(
+        default=None,
+        primary_key=True,
+        foreign_key="network.id",
+        ondelete="CASCADE",
+        exclude=True,
+    )
     asn: Optional[str]
     hostname: Optional[str]
     cidr: Union[str, IPvAnyNetwork] = Field(sa_column=Column(CIDR, index=True))
@@ -38,7 +46,13 @@ class Summary(SQLModel, table=True):
 
 
 class IpGeolocation(SQLModel, table=True):
-    network_id: Optional[int] = Field(default=None, primary_key=True, foreign_key="network.id", ondelete="CASCADE", exclude=True)
+    network_id: Optional[int] = Field(
+        default=None,
+        primary_key=True,
+        foreign_key="network.id",
+        ondelete="CASCADE",
+        exclude=True,
+    )
     city: Optional[str]
     state: Optional[str]
     country: Optional[str]

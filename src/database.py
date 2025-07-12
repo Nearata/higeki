@@ -10,4 +10,5 @@ def url() -> str:
 
     return f"postgresql+psycopg://postgres:{PSW}@db/postgres"
 
+
 engine = create_engine(url())

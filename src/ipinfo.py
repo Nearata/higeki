@@ -46,7 +46,8 @@ async def check_ipinfo(
         privacy="true" in privacy,
         anycast="true" in anycast,
         asn_type=asn_type,
-        abuse_contact=abuse_contact)
+        abuse_contact=abuse_contact,
+    )
     new_ip_geolocation = IpGeolocation(
         city=city,
         state=state,
@@ -54,9 +55,11 @@ async def check_ipinfo(
         flag=flag,
         postal=postal,
         timezone=timezone,
-        coordinates=coordinates
+        coordinates=coordinates,
     )
-    new_network = Network(hiding=is_hiding, summary=new_summary, ipgeolocation=new_ip_geolocation)
+    new_network = Network(
+        hiding=is_hiding, summary=new_summary, ipgeolocation=new_ip_geolocation
+    )
     session.add(new_network)
     session.commit()
     session.refresh(new_network)
