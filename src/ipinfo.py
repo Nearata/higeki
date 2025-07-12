@@ -1,11 +1,11 @@
-from typing import Optional, Union
+from typing import Optional
 
 from bs4 import BeautifulSoup
 from fastapi import Request
 from pydantic import IPvAnyAddress
 
 from .dependencies import SessionDep
-from .models import Network, Summary
+from .models import IpGeolocation, Network, Summary
 
 
 async def check_ipinfo(
@@ -18,13 +18,19 @@ async def check_ipinfo(
     hostname = get_summary(soup, "Hostname")
     range = get_summary(soup, "Range")
     company = get_summary(soup, "Company")
-    hosted_domains: Union[str, int, None] = get_summary(soup, "Hosted domains")
+    hosted_domains = get_summary(soup, "Hosted domains")
     privacy = get_summary(soup, "Privacy")
     anycast = get_summary(soup, "Anycast")
     asn_type = get_summary(soup, "ASN type")
     abuse_contact = get_summary(soup, "Abuse contact")
 
-    hosted_domains = int(hosted_domains) if hosted_domains else 0
+    city = get_ip_geolocation(soup, "City")
+    state = get_ip_geolocation(soup, "State")
+    country = get_ip_geolocation(soup, "Country")
+    flag = get_flag(soup)
+    postal = get_ip_geolocation(soup, "Postal")
+    timezone = get_ip_geolocation(soup, "Timezone")
+    coordinates = get_ip_geolocation(soup, "Coordinates")
 
     if not (range and privacy and anycast):
         return None
@@ -36,12 +42,21 @@ async def check_ipinfo(
         hostname=hostname,
         cidr=range,
         company=company,
-        hosted_domains=hosted_domains,
+        hosted_domains=int(hosted_domains.replace(",", "")) if hosted_domains else None,
         privacy="true" in privacy,
         anycast="true" in anycast,
         asn_type=asn_type,
         abuse_contact=abuse_contact)
-    new_network = Network(hiding=is_hiding, summary=new_summary)
+    new_ip_geolocation = IpGeolocation(
+        city=city,
+        state=state,
+        country=country,
+        flag=flag,
+        postal=postal,
+        timezone=timezone,
+        coordinates=coordinates
+    )
+    new_network = Network(hiding=is_hiding, summary=new_summary, ipgeolocation=new_ip_geolocation)
     session.add(new_network)
     session.commit()
     session.refresh(new_network)
