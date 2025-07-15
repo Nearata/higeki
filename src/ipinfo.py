@@ -3,15 +3,26 @@ from typing import Optional
 from bs4 import BeautifulSoup
 from fastapi import Request
 from pydantic import IPvAnyAddress
+from httpx import RequestError, HTTPStatusError, Response
 
 from .dependencies import SessionDep
 from .models import IpGeolocation, Network, Summary
+from .logging import logger
 
 
 async def check_ipinfo(
     address: IPvAnyAddress, request: Request, session: SessionDep
 ) -> Optional[Network]:
-    r = await request.app.state.client.get(f"https://ipinfo.io/{address}")
+    try:
+        r: Response = await request.app.state.client.get(f"https://ipinfo.io/{address}", timeout=10)
+        r.raise_for_status()
+    except RequestError as e:
+        logger.error(f"Request failed for {address}: {e}")
+        return None
+    except HTTPStatusError as e:
+        logger.error(f"HTTP error {e.response.status_code} for {address}")
+        return None
+
     soup = BeautifulSoup(r.text, "html5lib")
 
     asn = get_summary(soup, "ASN")

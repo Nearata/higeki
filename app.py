@@ -56,6 +56,6 @@ async def read_item(
         return known
 
     if not (item := await check_ipinfo(address, request, session)):
-        raise HTTPException(503)
+        raise HTTPException(503, detail="Unable to retrieve data. Please try again later.")
 
     return item
