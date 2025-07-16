@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from fastapi import Request
 from pydantic import IPvAnyAddress
 from httpx import RequestError, HTTPStatusError, Response
+from starlette.exceptions import HTTPException
 
 from .dependencies import SessionDep
 from .models import IpGeolocation, Network, Summary
@@ -71,9 +72,15 @@ async def check_ipinfo(
     new_network = Network(
         hiding=is_hiding, summary=new_summary, ipgeolocation=new_ip_geolocation
     )
-    session.add(new_network)
-    session.commit()
-    session.refresh(new_network)
+
+    try:
+        session.add(new_network)
+        session.commit()
+        session.refresh(new_network)
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Database error: {e}")
+        raise HTTPException(500, "Database operation failed")
 
     return new_network
 
