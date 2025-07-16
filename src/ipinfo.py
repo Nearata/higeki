@@ -2,20 +2,22 @@ from typing import Optional
 
 from bs4 import BeautifulSoup
 from fastapi import Request
+from httpx import HTTPStatusError, RequestError, Response
 from pydantic import IPvAnyAddress
-from httpx import RequestError, HTTPStatusError, Response
 from starlette.exceptions import HTTPException
 
 from .dependencies import SessionDep
-from .models import IpGeolocation, Network, Summary
 from .logging import logger
+from .models import IpGeolocation, Network, Summary
 
 
 async def check_ipinfo(
     address: IPvAnyAddress, request: Request, session: SessionDep
 ) -> Optional[Network]:
     try:
-        r: Response = await request.app.state.client.get(f"https://ipinfo.io/{address}", timeout=10)
+        r: Response = await request.app.state.client.get(
+            f"https://ipinfo.io/{address}", timeout=10
+        )
         r.raise_for_status()
     except RequestError as e:
         logger.error(f"Request failed for {address}: {e}")
