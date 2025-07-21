@@ -14,6 +14,7 @@ from starlette.responses import Response
 from src.dependencies import SessionDep
 from src.ipinfo import check_ipinfo
 from src.models import Item, Network, Summary
+from src.graphql.schema import graphql_app
 
 
 @asynccontextmanager
@@ -37,6 +38,7 @@ app = FastAPI(
     swagger_ui_oauth2_redirect_url=None,
     lifespan=lifespan,
 )
+app.include_router(graphql_app, prefix="/graphql")
 
 
 def is_known_network(address: IPvAnyAddress, session: SessionDep) -> Optional[Network]:

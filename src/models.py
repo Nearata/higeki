@@ -17,9 +17,9 @@ class Item(BaseModel):
 
 class Network(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
-    hiding: bool
-    created_at: datetime = Field(default_factory=datetime.now)
-    updated_at: datetime = Field(
+    hiding: Optional[bool]
+    created_at: Optional[datetime] = Field(default_factory=datetime.now)
+    updated_at: Optional[datetime] = Field(
         default_factory=datetime.now, sa_column_kwargs={"onupdate": func.now()}
     )
     summary: "Summary" = Relationship()
@@ -36,7 +36,7 @@ class Summary(SQLModel, table=True):
     )
     asn: Optional[str]
     hostname: Optional[str]
-    cidr: Union[str, IPvAnyNetwork] = Field(sa_column=Column(CIDR, index=True))
+    cidr: Optional[Union[IPvAnyNetwork, str]] = Field(sa_column=Column(CIDR, index=True))
     company: Optional[str]
     hosted_domains: Optional[int]
     privacy: Optional[bool]

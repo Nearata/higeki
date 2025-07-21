@@ -3,3 +3,14 @@ extend-select = [
     "I", # isort
     "FAST" # fastapi
 ]
+
+[tool.mypy]
+plugins = [
+    "pydantic.mypy",
+    "strawberry.ext.mypy_plugin"
+]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true

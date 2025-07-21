@@ -11,6 +11,7 @@ sqlmodel = "*"
 fastapi = {version = "*", extras = ["standard-no-fastapi-cloud-cli"]}
 psycopg = {version = "*", extras = ["binary"]}
 alembic = "*"
+strawberry-graphql = {version = "*", extras = ["fastapi"]}
 
 [dev-packages]
 mypy = "*"
