@@ -36,7 +36,9 @@ class Summary(SQLModel, table=True):
     )
     asn: Optional[str]
     hostname: Optional[str]
-    cidr: Optional[Union[IPvAnyNetwork, str]] = Field(sa_column=Column(CIDR, index=True))
+    cidr: Optional[Union[IPvAnyNetwork, str]] = Field(
+        sa_column=Column(CIDR, index=True)
+    )
     company: Optional[str]
     hosted_domains: Optional[int]
     privacy: Optional[bool]

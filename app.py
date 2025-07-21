@@ -12,9 +12,9 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from src.dependencies import SessionDep
+from src.graphql.schema import graphql_app
 from src.ipinfo import check_ipinfo
 from src.models import Item, Network, Summary
-from src.graphql.schema import graphql_app
 
 
 @asynccontextmanager

@@ -1,18 +1,20 @@
-import strawberry
+from ipaddress import ip_address as ipaddress_validator
+from re import sub
+from typing import Any, Optional
 
-from typing import Optional, Any
-from strawberry.fastapi import GraphQLRouter
+import strawberry
+from sqlalchemy import inspect, literal
 from sqlalchemy.dialects.postgresql import INET
-from sqlmodel import select
-from sqlalchemy import literal, inspect
-from sqlalchemy.orm import load_only, selectinload, raiseload
+from sqlalchemy.orm import load_only, raiseload, selectinload
 from sqlalchemy.orm.state import InstanceState
+from sqlmodel import select
+from strawberry.fastapi import GraphQLRouter
 
 from src.dependencies import graphql_context
-from src.models import IpGeolocation as IpGeolocationModel, Summary as SummaryModel, Network as NetworkModel
 from src.ipinfo import check_ipinfo
-from re import sub
-from ipaddress import ip_address as ipaddress_validator
+from src.models import IpGeolocation as IpGeolocationModel
+from src.models import Network as NetworkModel
+from src.models import Summary as SummaryModel
 
 
 def snakecase(s: str) -> str:
@@ -66,8 +68,12 @@ class Response:
         unloaded = state.unloaded
         return cls(
             network=Network.from_pydantic(network),
-            summary=Summary.from_pydantic(network.summary) if "summary" not in unloaded else None,
-            ipGeolocation=IpGeolocation.from_pydantic(network.ipgeolocation) if "ipgeolocation" not in unloaded else None
+            summary=Summary.from_pydantic(network.summary)
+            if "summary" not in unloaded
+            else None,
+            ipGeolocation=IpGeolocation.from_pydantic(network.ipgeolocation)
+            if "ipgeolocation" not in unloaded
+            else None,
         )
 
 
@@ -97,7 +103,11 @@ class Query:
                     out.append(getattr(relationship, column))
 
             if relationship:
-                o.append(selectinload(getattr(NetworkModel, table)).load_only(*(i for i in out)))
+                o.append(
+                    selectinload(getattr(NetworkModel, table)).load_only(
+                        *(i for i in out)
+                    )
+                )
             else:
                 o.append(load_only(*(i for i in out)))
 

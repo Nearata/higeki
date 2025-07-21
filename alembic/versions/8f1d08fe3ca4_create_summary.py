@@ -23,7 +23,13 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "summary",
-        sa.Column("network_id", sa.Integer, sa.ForeignKey("network.id"), primary_key=True, index=True),
+        sa.Column(
+            "network_id",
+            sa.Integer,
+            sa.ForeignKey("network.id"),
+            primary_key=True,
+            index=True,
+        ),
         sa.Column("asn", sa.String),
         sa.Column("hostname", sa.String(255)),
         sa.Column("cidr", CIDR, index=True),

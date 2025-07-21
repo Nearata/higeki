@@ -22,7 +22,13 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "ipgeolocation",
-        sa.Column("network_id", sa.Integer, sa.ForeignKey("network.id"), primary_key=True, index=True),
+        sa.Column(
+            "network_id",
+            sa.Integer,
+            sa.ForeignKey("network.id"),
+            primary_key=True,
+            index=True,
+        ),
         sa.Column("city", sa.String),
         sa.Column("state", sa.String),
         sa.Column("country", sa.String),
