@@ -30,7 +30,7 @@ async def check_ipinfo(
 
     asn = get_summary(soup, "ASN")
     hostname = get_summary(soup, "Hostname")
-    range = get_summary(soup, "Range")
+    range = get_range(soup)
     company = get_summary(soup, "Company")
     hosted_domains = get_summary(soup, "Hosted domains")
     privacy = get_summary(soup, "Privacy")
@@ -123,7 +123,7 @@ def get_range(soup: BeautifulSoup) -> Optional[str]:
     if not (ol := soup.find("ol", {"class": "breadcrumbs"})):
         return None
 
-    if not (links := ol.find_all("li")):
+    if not (links := ol.find_all("a")):
         return None
 
     return links[-1].get_text().strip()

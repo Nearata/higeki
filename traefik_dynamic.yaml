@@ -13,8 +13,9 @@ tls:
         - CurveP256
         - CurveP521
         - CurveP384
-  stores:
-    default:
-      defaultCertificate:
-        certFile: /higeki.nearata.com.pem
-        keyFile: /higeki.nearata.com-key.pem
+  # https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/
+  #stores:
+  #  default:
+  #    defaultCertificate:
+  #      certFile: localhost.pem
+  #      keyFile: localhost-key.pem
